@@ -441,6 +441,37 @@
                 <button class="btn btn-primary" id="start-btn" disabled>
                     Začít kvíz
                 </button>
+                <p style="margin-top: 40px">
+                    <a
+                        href="#"
+                        id="teacher-link"
+                        style="
+                            color: #7c5cfc88;
+                            font-size: 0.8em;
+                            text-decoration: none;
+                        "
+                        >Vstup pro učitele</a
+                    >
+                </p>
+                <div id="teacher-login" style="display: none; margin-top: 16px">
+                    <div class="teacher-pwd">
+                        <input
+                            type="password"
+                            id="teacher-pwd-start"
+                            placeholder="Heslo"
+                        />
+                        <button
+                            class="btn btn-primary btn-sm"
+                            id="teacher-btn-start"
+                        >
+                            Zobrazit výsledky
+                        </button>
+                    </div>
+                    <div
+                        id="results-table-start"
+                        style="margin-top: 16px; text-align: left"
+                    ></div>
+                </div>
             </div>
 
             <!-- QUIZ -->
@@ -975,10 +1006,10 @@
             }
 
             // Teacher results
-            $("#teacher-btn").addEventListener("click", async () => {
-                if ($("#teacher-pwd").value !== TEACHER_PWD) {
-                    $("#results-table").innerHTML =
-                        '<p style="color:#ef4444;margin-top:12px">Nesprávné heslo.</p>';
+            async function loadResults(pwdInput, tableEl) {
+                if (pwdInput.value !== TEACHER_PWD) {
+                    tableEl.innerHTML =
+                        '<p style="color:#ef4444;margin-top:12px">Nespr\u00e1vn\u00e9 heslo.</p>';
                     return;
                 }
                 try {
@@ -994,22 +1025,38 @@
                     );
                     const data = await res.json();
                     if (!data.length) {
-                        $("#results-table").innerHTML =
-                            '<p style="margin-top:12px">Zatím žádné výsledky.</p>';
+                        tableEl.innerHTML =
+                            '<p style="margin-top:12px">Zat\u00edm \u017e\u00e1dn\u00e9 v\u00fdsledky.</p>';
                         return;
                     }
                     let t =
-                        "<table><thead><tr><th>Jméno</th><th>Skóre</th><th>%</th><th>Datum</th></tr></thead><tbody>";
+                        "<table><thead><tr><th>Jm\u00e9no</th><th>Sk\u00f3re</th><th>%</th><th>Datum</th></tr></thead><tbody>";
                     data.forEach((r) => {
                         const d = new Date(r.submitted_at);
                         t += `<tr><td>${esc(r.name)}</td><td>${r.score}/${r.total}</td><td>${r.percent}%</td><td>${d.toLocaleDateString("cs-CZ")} ${d.toLocaleTimeString("cs-CZ", { hour: "2-digit", minute: "2-digit" })}</td></tr>`;
                     });
                     t += "</tbody></table>";
-                    $("#results-table").innerHTML = t;
+                    tableEl.innerHTML = t;
                 } catch (e) {
-                    $("#results-table").innerHTML =
-                        '<p style="color:#ef4444">Chyba načítání.</p>';
+                    tableEl.innerHTML =
+                        '<p style="color:#ef4444">Chyba na\u010d\u00edt\u00e1n\u00ed.</p>';
                 }
+            }
+
+            // Teacher on start screen
+            $("#teacher-link").addEventListener("click", (e) => {
+                e.preventDefault();
+                const el = $("#teacher-login");
+                el.style.display =
+                    el.style.display === "none" ? "block" : "none";
+            });
+            $("#teacher-btn-start").addEventListener("click", () => {
+                loadResults($("#teacher-pwd-start"), $("#results-table-start"));
+            });
+
+            // Teacher on result screen
+            $("#teacher-btn").addEventListener("click", () => {
+                loadResults($("#teacher-pwd"), $("#results-table"));
             });
 
             function esc(s) {
