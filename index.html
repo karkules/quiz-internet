@@ -1,530 +1,1028 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="cs">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Kvíz – Internet | Nezkreslená věda</title>
-<style>
-  *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:'Segoe UI',Tahoma,sans-serif;background:#0f0c29;background:linear-gradient(135deg,#0f0c29,#302b63,#24243e);min-height:100vh;color:#fff;padding:20px}
-  .container{max-width:700px;margin:0 auto}
-  h1{text-align:center;font-size:1.8em;margin-bottom:5px}
-  .subtitle{text-align:center;opacity:.7;margin-bottom:30px;font-size:.95em}
-  /* Screens */
-  .screen{display:none}.screen.active{display:block}
-  /* Start */
-  #start-screen{text-align:center;padding-top:60px}
-  #start-screen h2{font-size:1.4em;margin-bottom:20px}
-  input[type=text]{padding:12px 18px;border-radius:12px;border:2px solid #555;background:#1a1a3e;color:#fff;font-size:1em;width:80%;max-width:350px;text-align:center;outline:none}
-  input[type=text]:focus{border-color:#7c5cfc}
-  .btn{display:inline-block;padding:14px 36px;border:none;border-radius:14px;font-size:1.05em;font-weight:700;cursor:pointer;margin-top:20px;transition:.2s;color:#fff}
-  .btn-primary{background:linear-gradient(135deg,#7c5cfc,#a855f7)}
-  .btn-primary:hover{transform:scale(1.04);box-shadow:0 4px 20px #7c5cfc66}
-  .btn-primary:disabled{opacity:.4;cursor:default;transform:none;box-shadow:none}
-  /* Progress */
-  .progress-wrap{background:#1a1a3e;border-radius:20px;height:12px;margin-bottom:24px;overflow:hidden}
-  .progress-bar{height:100%;background:linear-gradient(90deg,#7c5cfc,#a855f7);border-radius:20px;transition:width .4s}
-  .q-counter{text-align:right;font-size:.85em;opacity:.6;margin-bottom:6px}
-  /* Question card */
-  .card{background:#1a1a3e;border-radius:20px;padding:28px;margin-bottom:20px;box-shadow:0 8px 30px #0005}
-  .card h2{font-size:1.15em;margin-bottom:18px;line-height:1.5}
-  .q-type-badge{display:inline-block;font-size:.75em;padding:3px 10px;border-radius:8px;background:#7c5cfc33;color:#c4b5fd;margin-bottom:10px}
-  /* Options */
-  .options{display:flex;flex-direction:column;gap:10px}
-  .opt{padding:14px 18px;border-radius:14px;border:2px solid #333;background:#12122a;cursor:pointer;transition:.2s;font-size:.98em;display:flex;align-items:center;gap:10px}
-  .opt:hover{border-color:#7c5cfc;background:#1e1e4a}
-  .opt.selected{border-color:#7c5cfc;background:#2d2b6b}
-  .opt.correct{border-color:#22c55e;background:#14532d88}
-  .opt.wrong{border-color:#ef4444;background:#7f1d1d88}
-  .opt .marker{width:22px;height:22px;border-radius:50%;border:2px solid #555;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:.8em}
-  .opt.selected .marker{border-color:#7c5cfc;background:#7c5cfc}
-  .opt.correct .marker{border-color:#22c55e;background:#22c55e}
-  .opt.wrong .marker{border-color:#ef4444;background:#ef4444}
-  .opt input[type=checkbox],.opt input[type=radio]{display:none}
-  /* Checkbox marker */
-  .chk-marker{width:22px;height:22px;border-radius:6px;border:2px solid #555;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:.85em}
-  .opt.selected .chk-marker{border-color:#7c5cfc;background:#7c5cfc}
-  .opt.correct .chk-marker{border-color:#22c55e;background:#22c55e}
-  .opt.wrong .chk-marker{border-color:#ef4444;background:#ef4444}
-  /* True/False */
-  .tf-wrap{display:flex;gap:12px}
-  .tf-wrap .opt{flex:1;justify-content:center;font-weight:700;font-size:1.1em}
-  /* Order */
-  .order-list{display:flex;flex-direction:column;gap:8px}
-  .order-item{padding:14px 18px;border-radius:14px;border:2px solid #333;background:#12122a;cursor:grab;display:flex;align-items:center;gap:10px;font-size:.98em;user-select:none;transition:.15s}
-  .order-item:active{cursor:grabbing;background:#1e1e4a}
-  .order-item .num{width:26px;height:26px;border-radius:50%;background:#7c5cfc33;display:flex;align-items:center;justify-content:center;font-size:.85em;font-weight:700;color:#c4b5fd;flex-shrink:0}
-  .order-item.correct{border-color:#22c55e;background:#14532d88}
-  .order-item.wrong{border-color:#ef4444;background:#7f1d1d88}
-  .drag-over{border-color:#7c5cfc;background:#2d2b6b}
-  /* Fill in */
-  .fill-input{padding:12px 18px;border-radius:12px;border:2px solid #444;background:#12122a;color:#fff;font-size:1em;width:100%;outline:none}
-  .fill-input:focus{border-color:#7c5cfc}
-  .fill-input.correct{border-color:#22c55e}
-  .fill-input.wrong{border-color:#ef4444}
-  /* Feedback */
-  .feedback{margin-top:14px;padding:12px 16px;border-radius:12px;font-size:.95em;display:none}
-  .feedback.show{display:block}
-  .feedback.ok{background:#14532d88;border:1px solid #22c55e55}
-  .feedback.nok{background:#7f1d1d88;border:1px solid #ef444455}
-  /* Nav */
-  .nav{display:flex;justify-content:flex-end;margin-top:16px}
-  /* Result */
-  #result-screen{text-align:center;padding-top:40px}
-  .score-circle{width:160px;height:160px;border-radius:50%;background:conic-gradient(#7c5cfc var(--pct),#1a1a3e 0);display:flex;align-items:center;justify-content:center;margin:30px auto;position:relative}
-  .score-circle::after{content:'';width:130px;height:130px;border-radius:50%;background:#0f0c29;position:absolute}
-  .score-text{position:relative;z-index:1;font-size:2em;font-weight:800}
-  .score-label{font-size:.9em;opacity:.6;margin-bottom:30px}
-  /* Teacher */
-  #teacher-section{margin-top:50px;border-top:1px solid #333;padding-top:30px}
-  #teacher-section h3{margin-bottom:14px}
-  .teacher-pwd{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
-  .teacher-pwd input{padding:10px 16px;border-radius:10px;border:2px solid #555;background:#1a1a3e;color:#fff;font-size:.95em;outline:none}
-  .teacher-pwd input:focus{border-color:#7c5cfc}
-  .btn-sm{padding:10px 22px;font-size:.9em;border-radius:10px}
-  table{width:100%;border-collapse:collapse;margin-top:20px;font-size:.9em}
-  th,td{padding:10px 8px;text-align:left;border-bottom:1px solid #222}
-  th{color:#c4b5fd;font-weight:600}
-  tr:nth-child(even){background:#ffffff08}
-  @media(max-width:500px){h1{font-size:1.3em}.card{padding:20px}.btn{padding:12px 28px}}
-</style>
-</head>
-<body>
-<div class="container">
-<h1>Kvíz – Historie internetu</h1>
-<p class="subtitle">Nezkreslená věda</p>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Kvíz – Internet | Nezkreslená věda</title>
+        <style>
+            * {
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0;
+            }
+            body {
+                font-family: "Segoe UI", Tahoma, sans-serif;
+                background: #0f0c29;
+                background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+                min-height: 100vh;
+                color: #fff;
+                padding: 20px;
+            }
+            .container {
+                max-width: 700px;
+                margin: 0 auto;
+            }
+            h1 {
+                text-align: center;
+                font-size: 1.8em;
+                margin-bottom: 5px;
+            }
+            .subtitle {
+                text-align: center;
+                opacity: 0.7;
+                margin-bottom: 30px;
+                font-size: 0.95em;
+            }
+            /* Screens */
+            .screen {
+                display: none;
+            }
+            .screen.active {
+                display: block;
+            }
+            /* Start */
+            #start-screen {
+                text-align: center;
+                padding-top: 60px;
+            }
+            #start-screen h2 {
+                font-size: 1.4em;
+                margin-bottom: 20px;
+            }
+            input[type="text"] {
+                padding: 12px 18px;
+                border-radius: 12px;
+                border: 2px solid #555;
+                background: #1a1a3e;
+                color: #fff;
+                font-size: 1em;
+                width: 80%;
+                max-width: 350px;
+                text-align: center;
+                outline: none;
+            }
+            input[type="text"]:focus {
+                border-color: #7c5cfc;
+            }
+            .btn {
+                display: inline-block;
+                padding: 14px 36px;
+                border: none;
+                border-radius: 14px;
+                font-size: 1.05em;
+                font-weight: 700;
+                cursor: pointer;
+                margin-top: 20px;
+                transition: 0.2s;
+                color: #fff;
+            }
+            .btn-primary {
+                background: linear-gradient(135deg, #7c5cfc, #a855f7);
+            }
+            .btn-primary:hover {
+                transform: scale(1.04);
+                box-shadow: 0 4px 20px #7c5cfc66;
+            }
+            .btn-primary:disabled {
+                opacity: 0.4;
+                cursor: default;
+                transform: none;
+                box-shadow: none;
+            }
+            /* Progress */
+            .progress-wrap {
+                background: #1a1a3e;
+                border-radius: 20px;
+                height: 12px;
+                margin-bottom: 24px;
+                overflow: hidden;
+            }
+            .progress-bar {
+                height: 100%;
+                background: linear-gradient(90deg, #7c5cfc, #a855f7);
+                border-radius: 20px;
+                transition: width 0.4s;
+            }
+            .q-counter {
+                text-align: right;
+                font-size: 0.85em;
+                opacity: 0.6;
+                margin-bottom: 6px;
+            }
+            /* Question card */
+            .card {
+                background: #1a1a3e;
+                border-radius: 20px;
+                padding: 28px;
+                margin-bottom: 20px;
+                box-shadow: 0 8px 30px #0005;
+            }
+            .card h2 {
+                font-size: 1.15em;
+                margin-bottom: 18px;
+                line-height: 1.5;
+            }
+            .q-type-badge {
+                display: inline-block;
+                font-size: 0.75em;
+                padding: 3px 10px;
+                border-radius: 8px;
+                background: #7c5cfc33;
+                color: #c4b5fd;
+                margin-bottom: 10px;
+            }
+            /* Options */
+            .options {
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+            }
+            .opt {
+                padding: 14px 18px;
+                border-radius: 14px;
+                border: 2px solid #333;
+                background: #12122a;
+                cursor: pointer;
+                transition: 0.2s;
+                font-size: 0.98em;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+            .opt:hover {
+                border-color: #7c5cfc;
+                background: #1e1e4a;
+            }
+            .opt.selected {
+                border-color: #7c5cfc;
+                background: #2d2b6b;
+            }
+            .opt.correct {
+                border-color: #22c55e;
+                background: #14532d88;
+            }
+            .opt.wrong {
+                border-color: #ef4444;
+                background: #7f1d1d88;
+            }
+            .opt .marker {
+                width: 22px;
+                height: 22px;
+                border-radius: 50%;
+                border: 2px solid #555;
+                flex-shrink: 0;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 0.8em;
+            }
+            .opt.selected .marker {
+                border-color: #7c5cfc;
+                background: #7c5cfc;
+            }
+            .opt.correct .marker {
+                border-color: #22c55e;
+                background: #22c55e;
+            }
+            .opt.wrong .marker {
+                border-color: #ef4444;
+                background: #ef4444;
+            }
+            .opt input[type="checkbox"],
+            .opt input[type="radio"] {
+                display: none;
+            }
+            /* Checkbox marker */
+            .chk-marker {
+                width: 22px;
+                height: 22px;
+                border-radius: 6px;
+                border: 2px solid #555;
+                flex-shrink: 0;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 0.85em;
+            }
+            .opt.selected .chk-marker {
+                border-color: #7c5cfc;
+                background: #7c5cfc;
+            }
+            .opt.correct .chk-marker {
+                border-color: #22c55e;
+                background: #22c55e;
+            }
+            .opt.wrong .chk-marker {
+                border-color: #ef4444;
+                background: #ef4444;
+            }
+            /* True/False */
+            .tf-wrap {
+                display: flex;
+                gap: 12px;
+            }
+            .tf-wrap .opt {
+                flex: 1;
+                justify-content: center;
+                font-weight: 700;
+                font-size: 1.1em;
+            }
+            /* Order */
+            .order-list {
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+            }
+            .order-item {
+                padding: 14px 18px;
+                border-radius: 14px;
+                border: 2px solid #333;
+                background: #12122a;
+                cursor: grab;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                font-size: 0.98em;
+                user-select: none;
+                transition: 0.15s;
+            }
+            .order-item:active {
+                cursor: grabbing;
+                background: #1e1e4a;
+            }
+            .order-item .num {
+                width: 26px;
+                height: 26px;
+                border-radius: 50%;
+                background: #7c5cfc33;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 0.85em;
+                font-weight: 700;
+                color: #c4b5fd;
+                flex-shrink: 0;
+            }
+            .order-item.correct {
+                border-color: #22c55e;
+                background: #14532d88;
+            }
+            .order-item.wrong {
+                border-color: #ef4444;
+                background: #7f1d1d88;
+            }
+            .drag-over {
+                border-color: #7c5cfc;
+                background: #2d2b6b;
+            }
+            /* Fill in */
+            .fill-input {
+                padding: 12px 18px;
+                border-radius: 12px;
+                border: 2px solid #444;
+                background: #12122a;
+                color: #fff;
+                font-size: 1em;
+                width: 100%;
+                outline: none;
+            }
+            .fill-input:focus {
+                border-color: #7c5cfc;
+            }
+            .fill-input.correct {
+                border-color: #22c55e;
+            }
+            .fill-input.wrong {
+                border-color: #ef4444;
+            }
+            /* Feedback */
+            .feedback {
+                margin-top: 14px;
+                padding: 12px 16px;
+                border-radius: 12px;
+                font-size: 0.95em;
+                display: none;
+            }
+            .feedback.show {
+                display: block;
+            }
+            .feedback.ok {
+                background: #14532d88;
+                border: 1px solid #22c55e55;
+            }
+            .feedback.nok {
+                background: #7f1d1d88;
+                border: 1px solid #ef444455;
+            }
+            /* Nav */
+            .nav {
+                display: flex;
+                justify-content: flex-end;
+                margin-top: 16px;
+            }
+            /* Result */
+            #result-screen {
+                text-align: center;
+                padding-top: 40px;
+            }
+            .score-circle {
+                width: 160px;
+                height: 160px;
+                border-radius: 50%;
+                background: conic-gradient(#7c5cfc var(--pct), #1a1a3e 0);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin: 30px auto;
+                position: relative;
+            }
+            .score-circle::after {
+                content: "";
+                width: 130px;
+                height: 130px;
+                border-radius: 50%;
+                background: #0f0c29;
+                position: absolute;
+            }
+            .score-text {
+                position: relative;
+                z-index: 1;
+                font-size: 2em;
+                font-weight: 800;
+            }
+            .score-label {
+                font-size: 0.9em;
+                opacity: 0.6;
+                margin-bottom: 30px;
+            }
+            /* Teacher */
+            #teacher-section {
+                margin-top: 50px;
+                border-top: 1px solid #333;
+                padding-top: 30px;
+            }
+            #teacher-section h3 {
+                margin-bottom: 14px;
+            }
+            .teacher-pwd {
+                display: flex;
+                gap: 10px;
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+            .teacher-pwd input {
+                padding: 10px 16px;
+                border-radius: 10px;
+                border: 2px solid #555;
+                background: #1a1a3e;
+                color: #fff;
+                font-size: 0.95em;
+                outline: none;
+            }
+            .teacher-pwd input:focus {
+                border-color: #7c5cfc;
+            }
+            .btn-sm {
+                padding: 10px 22px;
+                font-size: 0.9em;
+                border-radius: 10px;
+            }
+            table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 20px;
+                font-size: 0.9em;
+            }
+            th,
+            td {
+                padding: 10px 8px;
+                text-align: left;
+                border-bottom: 1px solid #222;
+            }
+            th {
+                color: #c4b5fd;
+                font-weight: 600;
+            }
+            tr:nth-child(even) {
+                background: #ffffff08;
+            }
+            @media (max-width: 500px) {
+                h1 {
+                    font-size: 1.3em;
+                }
+                .card {
+                    padding: 20px;
+                }
+                .btn {
+                    padding: 12px 28px;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>Kvíz – Historie internetu</h1>
+            <p class="subtitle">Nezkreslená věda</p>
 
-<!-- START -->
-<div id="start-screen" class="screen active">
-  <h2>Vítej v kvízu!</h2>
-  <p style="opacity:.7;margin-bottom:24px">Zadej své jméno a otestuj si znalosti o vzniku a fungování internetu.</p>
-  <input type="text" id="player-name" placeholder="Tvoje jméno" autocomplete="off">
-  <br>
-  <button class="btn btn-primary" id="start-btn" disabled>Začít kvíz</button>
-</div>
+            <!-- START -->
+            <div id="start-screen" class="screen active">
+                <h2>Vítej v kvízu!</h2>
+                <p style="opacity: 0.7; margin-bottom: 24px">
+                    Zadej své jméno a otestuj si znalosti o vzniku a fungování
+                    internetu.
+                </p>
+                <input
+                    type="text"
+                    id="player-name"
+                    placeholder="Tvoje jméno"
+                    autocomplete="off"
+                />
+                <br />
+                <button class="btn btn-primary" id="start-btn" disabled>
+                    Začít kvíz
+                </button>
+            </div>
 
-<!-- QUIZ -->
-<div id="quiz-screen" class="screen">
-  <div class="q-counter" id="q-counter"></div>
-  <div class="progress-wrap"><div class="progress-bar" id="progress"></div></div>
-  <div class="card" id="q-card"></div>
-  <div class="feedback" id="feedback"></div>
-  <div class="nav">
-    <button class="btn btn-primary" id="next-btn" style="display:none">Další otázka</button>
-    <button class="btn btn-primary" id="check-btn">Zkontrolovat</button>
-  </div>
-</div>
+            <!-- QUIZ -->
+            <div id="quiz-screen" class="screen">
+                <div class="q-counter" id="q-counter"></div>
+                <div class="progress-wrap">
+                    <div class="progress-bar" id="progress"></div>
+                </div>
+                <div class="card" id="q-card"></div>
+                <div class="feedback" id="feedback"></div>
+                <div class="nav">
+                    <button
+                        class="btn btn-primary"
+                        id="next-btn"
+                        style="display: none"
+                    >
+                        Další otázka
+                    </button>
+                    <button class="btn btn-primary" id="check-btn">
+                        Zkontrolovat
+                    </button>
+                </div>
+            </div>
 
-<!-- RESULT -->
-<div id="result-screen" class="screen">
-  <h2>Výsledky</h2>
-  <div class="score-circle" id="score-circle"><span class="score-text" id="score-text"></span></div>
-  <p class="score-label" id="score-label"></p>
-  <p id="score-msg" style="font-size:1.1em;margin-bottom:10px"></p>
-  <button class="btn btn-primary" onclick="location.reload()">Zkusit znovu</button>
+            <!-- RESULT -->
+            <div id="result-screen" class="screen">
+                <h2>Výsledky</h2>
+                <div class="score-circle" id="score-circle">
+                    <span class="score-text" id="score-text"></span>
+                </div>
+                <p class="score-label" id="score-label"></p>
+                <p
+                    id="score-msg"
+                    style="font-size: 1.1em; margin-bottom: 10px"
+                ></p>
+                <button class="btn btn-primary" onclick="location.reload()">
+                    Zkusit znovu
+                </button>
 
-  <div id="teacher-section">
-    <h3>Výsledky třídy (pro učitele)</h3>
-    <div class="teacher-pwd">
-      <input type="password" id="teacher-pwd" placeholder="Heslo">
-      <button class="btn btn-primary btn-sm" id="teacher-btn">Zobrazit</button>
-    </div>
-    <div id="results-table"></div>
-  </div>
-</div>
+                <div id="teacher-section">
+                    <h3>Výsledky třídy (pro učitele)</h3>
+                    <div class="teacher-pwd">
+                        <input
+                            type="password"
+                            id="teacher-pwd"
+                            placeholder="Heslo"
+                        />
+                        <button class="btn btn-primary btn-sm" id="teacher-btn">
+                            Zobrazit
+                        </button>
+                    </div>
+                    <div id="results-table"></div>
+                </div>
+            </div>
+        </div>
 
-</div>
+        <script>
+            // ── Config ──
+            const SUPABASE_URL = "https://uytbkmayjhvuoiymqkrz.supabase.co";
+            const SUPABASE_KEY =
+                "sb_publishable_bRs28SFvfKc3bCh52JpAMw_Q5kDw3re";
+            const TEACHER_PWD = "ucitel123";
 
-<script>
-// ── Config ──
-const SUPABASE_URL = 'https://uytbkmayjhvuoiymqkrz.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_bRs28SFvfKc3bCh52JpAMw_Q5kDw3re';
-const TEACHER_PWD = 'ucitel123';
+            // ── Questions ──
+            const questions = [
+                {
+                    type: "single",
+                    q: "Která událost nepřímo vedla ke vzniku internetu?",
+                    options: [
+                        "Vynález telefonu",
+                        "Vypuštění družice Sputnik 1",
+                        "Vynález televize",
+                        "Založení OSN",
+                    ],
+                    answer: 1,
+                    hint: "Sovětský Sputnik 1 přiměl USA ke vzniku agentury ARPA, která stojí za vznikem internetu.",
+                },
+                {
+                    type: "tf",
+                    q: "Internet byl původně zamýšlen jako vojenská síť.",
+                    answer: true,
+                    hint: "Měl přežít jadernou válku – proto musel být decentralizovaný.",
+                },
+                {
+                    type: "single",
+                    q: "Jak se jmenovala první počítačová síť, ze které se vyvinul internet?",
+                    options: ["Cyclades", "Alohanet", "Arpanet", "Ethernet"],
+                    answer: 2,
+                    hint: "Arpanet propojil první univerzity v USA a později i Evropu.",
+                },
+                {
+                    type: "single",
+                    q: "Jak funguje přenos dat po internetu?",
+                    options: [
+                        "Soubor se pošle celý najednou",
+                        "Soubor se rozdělí na pakety, které putují samostatně a na cíli se složí",
+                        "Data putují jen po jedné pevné trase",
+                        "Data se posílají pouze přes satelit",
+                    ],
+                    answer: 1,
+                    hint: "Pakety putují nezávisle, ne nutně po stejné trase, a na cíli se seřadí zpět.",
+                },
+                {
+                    type: "fill",
+                    q: "Doplň název protokolu, který propojil různé sítě a funguje dodnes: ___ / IP",
+                    answer: ["tcp", "TCP"],
+                    hint: "TCP/IP vymysleli Bob Kahn a Vint Cerf – takzvaní otcové internetu.",
+                },
+                {
+                    type: "single",
+                    q: "Proč bylo potřeba vytvořit protokol TCP/IP?",
+                    options: [
+                        "Internet byl příliš pomalý",
+                        "Různé sítě (Arpanet, Cyclades, Alohanet) si navzájem nerozuměly",
+                        "Optická vlákna vyžadovala nový protokol",
+                        "USA chtěly odposlouchávat komunikaci",
+                    ],
+                    answer: 1,
+                    hint: "Sítě fungovaly na podobných principech, ale nebyly kompatibilní – TCP/IP je propojil.",
+                },
+                {
+                    type: "single",
+                    q: "Která služba zpřístupnila internet běžným uživatelům v 90. letech?",
+                    options: [
+                        "E-mail",
+                        "World Wide Web (WWW)",
+                        "Arpanet",
+                        "GPS",
+                    ],
+                    answer: 1,
+                    hint: "WWW vymysleli Tim Berners-Lee a Robert Cailliau v ženevském CERNu.",
+                },
+                {
+                    type: "fill",
+                    q: "V kterém roce byl poprvé spuštěn internet v Československu (na ČVUT)?",
+                    answer: ["1992"],
+                    hint: "Rok 1992, ČVUT v Praze.",
+                },
+                {
+                    type: "tf",
+                    q: "Internet lze vypnout jedním centrálním tlačítkem.",
+                    answer: false,
+                    hint: "Internet nemá začátek ani konec – je decentralizovaný, žádné stop tlačítko neexistuje.",
+                },
+                {
+                    type: "single",
+                    q: "Co se stane, když selže server v Praze?",
+                    options: [
+                        "Internet v Česku přestane fungovat",
+                        "Nic – data doputují na místo jinou cestou",
+                        "Musí se ručně restartovat celá síť",
+                        "Všechny pakety se ztratí",
+                    ],
+                    answer: 1,
+                    hint: "Díky decentralizaci pakety vždy najdou alternativní cestu.",
+                },
+                {
+                    type: "multi",
+                    q: "Jaké jsou výhody optických vláken oproti metalickým kabelům? (vyber 2)",
+                    options: [
+                        "Vyšší rychlost přenosu",
+                        "Nižší cena",
+                        "Menší útlum signálu",
+                        "Jednodušší instalace",
+                    ],
+                    answer: [0, 2],
+                    hint: "Optická vlákna jsou rychlejší a nezkreslují signály ani na velké vzdálenosti.",
+                },
+                {
+                    type: "single",
+                    q: "Díky jakému jevu se šíří světlo v optickém vlákně?",
+                    options: [
+                        "Lom světla",
+                        "Úplný odraz",
+                        "Rozptyl světla",
+                        "Absorpce",
+                    ],
+                    answer: 1,
+                    hint: "Fotony nemohou z jádra vlákna utéct díky jevu úplného odrazu.",
+                },
+                {
+                    type: "single",
+                    q: "Co zesiluje oslabený signál v optickém vlákně?",
+                    options: [
+                        "Měděné zesilovače",
+                        "Úseky vlákna s ionty erbia",
+                        "Satelitní přijímače",
+                        "Elektrické transformátory",
+                    ],
+                    answer: 1,
+                    hint: "Ionty erbia zesílí signál až 10 000krát. Energii dodává laserová dioda.",
+                },
+                {
+                    type: "tf",
+                    q: "V roce 2019 se za jednu hodinu poslalo stejně dat jako za celý rok 2000.",
+                    answer: true,
+                    hint: "Objem dat roste obrovskou rychlostí – řešením jsou právě optická vlákna.",
+                },
+                {
+                    type: "order",
+                    q: "Seřaď události od nejstarší po nejnovější:",
+                    items: [
+                        "Vypuštění Sputniku",
+                        "Vznik Arpanetu",
+                        "Vznik protokolu TCP/IP",
+                        "Spuštění WWW",
+                        "Internet na ČVUT",
+                    ],
+                    correctOrder: [0, 1, 2, 3, 4],
+                    hint: "Sputnik (1957) → Arpanet (konec 60. let) → TCP/IP (70. léta) → WWW (1991) → ČVUT (1992).",
+                },
+            ];
 
-// ── Questions ──
-const questions = [
-  {
-    type: 'single',
-    q: 'Co přispělo ke vzniku internetu?',
-    badge: 'Jedna správná',
-    options: [
-      'Vypuštění první umělé družice Sputnik 1 Sovětským svazem',
-      'Přistání na Měsíci',
-      'Vynález telefonu',
-      'Objev elektřiny'
-    ],
-    answer: 0,
-    hint: 'Správně! Sputnik 1 přiměl USA k založení agentury ARPA.'
-  },
-  {
-    type: 'tf',
-    q: 'Internet byl původně zamýšlen jako vojenská síť, která by přežila jadernou válku.',
-    answer: true,
-    hint: 'Správně! Musel být decentralizovaný, aby odolal výpadku jednotlivých uzlů.'
-  },
-  {
-    type: 'single',
-    q: 'V jakém roce zřídilo Ministerstvo obrany USA agenturu ARPA?',
-    badge: 'Jedna správná',
-    options: ['1945', '1958', '1969', '1973'],
-    answer: 1,
-    hint: 'Správně! Agentura ARPA vznikla v roce 1958.'
-  },
-  {
-    type: 'fill',
-    q: 'Doplň jméno protokolu, který propojil různé sítě a funguje dodnes: ___ / IP',
-    answer: ['tcp', 'TCP'],
-    hint: 'Správně! Protokol TCP/IP vymysleli Bob Kahn a Vint Cerf.'
-  },
-  {
-    type: 'multi',
-    q: 'Kteří dva vědci jsou označováni jako „otcové internetu"? (vyber 2)',
-    badge: 'Více správných',
-    options: [
-      'Tim Berners-Lee',
-      'Bob Kahn',
-      'Charles Kuen Kao',
-      'Vint Cerf'
-    ],
-    answer: [1, 3],
-    hint: 'Správně! Bob Kahn a Vint Cerf vymysleli protokol TCP/IP.'
-  },
-  {
-    type: 'single',
-    q: 'Kde byl v Československu poprvé spuštěn internet?',
-    badge: 'Jedna správná',
-    options: [
-      'Masarykova univerzita v Brně',
-      'ČVUT v Praze',
-      'Univerzita Karlova',
-      'Slovenská technická univerzita'
-    ],
-    answer: 1,
-    hint: 'Správně! Internet byl v Československu poprvé spuštěn roku 1992 na ČVUT.'
-  },
-  {
-    type: 'order',
-    q: 'Seřaď události od nejstarší po nejnovější:',
-    items: [
-      'Vypuštění Sputniku 1',
-      'Založení agentury ARPA',
-      'Propojení Arpanetu s Evropou',
-      'Spuštění internetu na ČVUT'
-    ],
-    correctOrder: [0, 1, 2, 3],
-    hint: 'Správně! Sputnik → ARPA (1958) → Arpanet + Evropa (1973) → ČVUT (1992).'
-  },
-  {
-    type: 'tf',
-    q: 'Existuje centrální červené tlačítko, kterým lze celý internet vypnout.',
-    answer: false,
-    hint: 'Správně! Žádné takové tlačítko neexistuje – internet je decentralizovaná síť.'
-  },
-  {
-    type: 'single',
-    q: 'Co je hlavní výhodou optických vláken oproti metalickým kabelům?',
-    badge: 'Jedna správná',
-    options: [
-      'Jsou levnější',
-      'Jsou rychlejší a mají menší útlum',
-      'Jsou barevnější',
-      'Nepotřebují elektřinu'
-    ],
-    answer: 1,
-    hint: 'Správně! Optická vlákna nezkreslují signály a mají menší útlum.'
-  },
-  {
-    type: 'fill',
-    q: 'Služba, která zpřístupnila internet běžným uživatelům v 90. letech, se jmenuje WWW, tedy World Wide ___.',
-    answer: ['web', 'Web', 'WEB'],
-    hint: 'Správně! World Wide Web vymysleli Tim Berners-Lee a Robert Cailliau v CERNu.'
-  },
-  {
-    type: 'multi',
-    q: 'Které univerzity/pracoviště byly mezi prvními propojenými sítí Arpanet? (vyber 3)',
-    badge: 'Více správných',
-    options: [
-      'Stanford',
-      'Harvard',
-      'Los Angeles (UCLA)',
-      'Santa Barbara',
-      'MIT'
-    ],
-    answer: [0, 2, 3],
-    hint: 'Správně! První uzly Arpanetu: Utah, Santa Barbara, Stanford a Los Angeles.'
-  },
-  {
-    type: 'single',
-    q: 'Jakým jevem se šíří světlo v optickém vlákně?',
-    badge: 'Jedna správná',
-    options: [
-      'Úplný odraz',
-      'Difrakce',
-      'Interference',
-      'Polarizace'
-    ],
-    answer: 0,
-    hint: 'Správně! Fotony putují vláknem díky jevu úplného odrazu.'
-  }
-];
+            // ── State ──
+            let current = 0,
+                score = 0,
+                answered = false;
+            let playerName = "";
+            let dragSrcIdx = null;
+            let orderState = [];
 
-// ── State ──
-let current = 0, score = 0, answered = false;
-let playerName = '';
-let dragSrcIdx = null;
-let orderState = [];
+            // ── DOM ──
+            const $ = (s) => document.querySelector(s);
+            const startScreen = $("#start-screen"),
+                quizScreen = $("#quiz-screen"),
+                resultScreen = $("#result-screen");
+            const nameInput = $("#player-name"),
+                startBtn = $("#start-btn");
+            const qCard = $("#q-card"),
+                qCounter = $("#q-counter"),
+                progressBar = $("#progress");
+            const feedbackEl = $("#feedback"),
+                checkBtn = $("#check-btn"),
+                nextBtn = $("#next-btn");
 
-// ── DOM ──
-const $=s=>document.querySelector(s);
-const startScreen=$('#start-screen'), quizScreen=$('#quiz-screen'), resultScreen=$('#result-screen');
-const nameInput=$('#player-name'), startBtn=$('#start-btn');
-const qCard=$('#q-card'), qCounter=$('#q-counter'), progressBar=$('#progress');
-const feedbackEl=$('#feedback'), checkBtn=$('#check-btn'), nextBtn=$('#next-btn');
+            function checkName() {
+                startBtn.disabled = !nameInput.value.trim();
+            }
+            nameInput.addEventListener("input", checkName);
+            nameInput.addEventListener("keyup", checkName);
+            nameInput.addEventListener("change", checkName);
+            nameInput.addEventListener("keydown", (e) => {
+                if (e.key === "Enter" && nameInput.value.trim()) startQuiz();
+            });
+            startBtn.addEventListener("click", startQuiz);
+            checkBtn.addEventListener("click", checkAnswer);
+            nextBtn.addEventListener("click", nextQuestion);
 
-nameInput.addEventListener('input',()=>{startBtn.disabled=!nameInput.value.trim()});
-nameInput.addEventListener('keydown',e=>{if(e.key==='Enter'&&nameInput.value.trim())startQuiz()});
-startBtn.addEventListener('click',startQuiz);
-checkBtn.addEventListener('click',checkAnswer);
-nextBtn.addEventListener('click',nextQuestion);
+            function startQuiz() {
+                playerName = nameInput.value.trim();
+                startScreen.classList.remove("active");
+                quizScreen.classList.add("active");
+                shuffle(questions);
+                renderQuestion();
+            }
 
-function startQuiz(){
-  playerName=nameInput.value.trim();
-  startScreen.classList.remove('active');
-  quizScreen.classList.add('active');
-  shuffle(questions);
-  renderQuestion();
-}
+            function renderQuestion() {
+                const q = questions[current];
+                answered = false;
+                feedbackEl.className = "feedback";
+                feedbackEl.style.display = "none";
+                checkBtn.style.display = "";
+                nextBtn.style.display = "none";
+                qCounter.textContent = `Otázka ${current + 1} / ${questions.length}`;
+                progressBar.style.width =
+                    (current / questions.length) * 100 + "%";
 
-function renderQuestion(){
-  const q=questions[current];
-  answered=false;
-  feedbackEl.className='feedback';feedbackEl.style.display='none';
-  checkBtn.style.display='';nextBtn.style.display='none';
-  qCounter.textContent=`Otázka ${current+1} / ${questions.length}`;
-  progressBar.style.width=((current)/questions.length*100)+'%';
+                let html = "";
+                const typeName = {
+                    single: "Jedna správná",
+                    multi: "Více správných",
+                    tf: "Pravda / Nepravda",
+                    fill: "Doplň odpověď",
+                    order: "Seřaď správně",
+                };
+                html += `<span class="q-type-badge">${typeName[q.type]}</span>`;
+                html += `<h2>${q.q}</h2>`;
 
-  let html='';
-  const typeName={single:'Jedna správná',multi:'Více správných',tf:'Pravda / Nepravda',fill:'Doplň odpověď',order:'Seřaď správně'};
-  html+=`<span class="q-type-badge">${typeName[q.type]}</span>`;
-  html+=`<h2>${q.q}</h2>`;
+                if (q.type === "single") {
+                    html += '<div class="options">';
+                    q.options.forEach((o, i) => {
+                        html += `<div class="opt" data-i="${i}" onclick="selectSingle(this)"><span class="marker"></span>${o}</div>`;
+                    });
+                    html += "</div>";
+                } else if (q.type === "multi") {
+                    html += '<div class="options">';
+                    q.options.forEach((o, i) => {
+                        html += `<div class="opt" data-i="${i}" onclick="toggleMulti(this)"><span class="chk-marker"></span>${o}</div>`;
+                    });
+                    html += "</div>";
+                } else if (q.type === "tf") {
+                    html += `<div class="tf-wrap">
+              <div class="opt" data-v="true" onclick="selectTF(this)">Pravda</div>
+              <div class="opt" data-v="false" onclick="selectTF(this)">Nepravda</div>
+            </div>`;
+                } else if (q.type === "fill") {
+                    html += `<input type="text" class="fill-input" id="fill-ans" placeholder="Napiš odpověď…" autocomplete="off">`;
+                } else if (q.type === "order") {
+                    orderState = [...q.items.keys()];
+                    shuffle(orderState);
+                    html += renderOrder(q);
+                }
+                qCard.innerHTML = html;
+                if (q.type === "fill") {
+                    const fi = $("#fill-ans");
+                    fi.addEventListener("keydown", (e) => {
+                        if (e.key === "Enter") checkAnswer();
+                    });
+                    fi.focus();
+                }
+            }
 
-  if(q.type==='single'){
-    html+='<div class="options">';
-    q.options.forEach((o,i)=>{
-      html+=`<div class="opt" data-i="${i}" onclick="selectSingle(this)"><span class="marker"></span>${o}</div>`;
-    });
-    html+='</div>';
-  } else if(q.type==='multi'){
-    html+='<div class="options">';
-    q.options.forEach((o,i)=>{
-      html+=`<div class="opt" data-i="${i}" onclick="toggleMulti(this)"><span class="chk-marker"></span>${o}</div>`;
-    });
-    html+='</div>';
-  } else if(q.type==='tf'){
-    html+=`<div class="tf-wrap">
-      <div class="opt" data-v="true" onclick="selectTF(this)">Pravda</div>
-      <div class="opt" data-v="false" onclick="selectTF(this)">Nepravda</div>
-    </div>`;
-  } else if(q.type==='fill'){
-    html+=`<input type="text" class="fill-input" id="fill-ans" placeholder="Napiš odpověď…" autocomplete="off">`;
-  } else if(q.type==='order'){
-    orderState=[...q.items.keys()];
-    shuffle(orderState);
-    html+=renderOrder(q);
-  }
-  qCard.innerHTML=html;
-  if(q.type==='fill'){
-    const fi=$('#fill-ans');
-    fi.addEventListener('keydown',e=>{if(e.key==='Enter')checkAnswer()});
-    fi.focus();
-  }
-}
+            function renderOrder(q) {
+                let h = '<div class="order-list" id="order-list">';
+                orderState.forEach((idx, pos) => {
+                    h += `<div class="order-item" draggable="true" data-pos="${pos}" ondragstart="dStart(event,${pos})" ondragover="dOver(event)" ondragenter="dEnter(event,this)" ondragleave="dLeave(this)" ondrop="dDrop(event,${pos})" ontouchstart="tStart(event,${pos})"><span class="num">${pos + 1}</span>${q.items[idx]}</div>`;
+                });
+                h += "</div>";
+                return h;
+            }
 
-function renderOrder(q){
-  let h='<div class="order-list" id="order-list">';
-  orderState.forEach((idx,pos)=>{
-    h+=`<div class="order-item" draggable="true" data-pos="${pos}" ondragstart="dStart(event,${pos})" ondragover="dOver(event)" ondragenter="dEnter(event,this)" ondragleave="dLeave(this)" ondrop="dDrop(event,${pos})" ontouchstart="tStart(event,${pos})"><span class="num">${pos+1}</span>${q.items[idx]}</div>`;
-  });
-  h+='</div>';
-  return h;
-}
+            // Drag & drop + touch
+            function dStart(e, i) {
+                dragSrcIdx = i;
+                e.dataTransfer.effectAllowed = "move";
+            }
+            function dOver(e) {
+                e.preventDefault();
+            }
+            function dEnter(e, el) {
+                e.preventDefault();
+                el.classList.add("drag-over");
+            }
+            function dLeave(el) {
+                el.classList.remove("drag-over");
+            }
+            function dDrop(e, i) {
+                e.preventDefault();
+                e.currentTarget.classList.remove("drag-over");
+                if (dragSrcIdx === null || dragSrcIdx === i) return;
+                const tmp = orderState[dragSrcIdx];
+                orderState[dragSrcIdx] = orderState[i];
+                orderState[i] = tmp;
+                const q = questions[current];
+                const listEl = $("#order-list");
+                listEl.outerHTML = renderOrder(q);
+                dragSrcIdx = null;
+            }
 
-// Drag & drop + touch
-function dStart(e,i){dragSrcIdx=i;e.dataTransfer.effectAllowed='move'}
-function dOver(e){e.preventDefault()}
-function dEnter(e,el){e.preventDefault();el.classList.add('drag-over')}
-function dLeave(el){el.classList.remove('drag-over')}
-function dDrop(e,i){
-  e.preventDefault();
-  e.currentTarget.classList.remove('drag-over');
-  if(dragSrcIdx===null||dragSrcIdx===i)return;
-  const tmp=orderState[dragSrcIdx];orderState[dragSrcIdx]=orderState[i];orderState[i]=tmp;
-  const q=questions[current];
-  const listEl=$('#order-list');
-  listEl.outerHTML=renderOrder(q);
-  dragSrcIdx=null;
-}
+            let touchIdx = null,
+                touchEl = null;
+            function tStart(e, i) {
+                touchIdx = i;
+                touchEl = e.currentTarget;
+                const onMove = (ev) => {
+                    ev.preventDefault();
+                };
+                const onEnd = (ev) => {
+                    document.removeEventListener("touchmove", onMove);
+                    document.removeEventListener("touchend", onEnd);
+                    const touch = ev.changedTouches[0];
+                    const target = document.elementFromPoint(
+                        touch.clientX,
+                        touch.clientY,
+                    );
+                    if (target) {
+                        const item = target.closest(".order-item");
+                        if (item) {
+                            const pos = parseInt(item.dataset.pos);
+                            if (pos !== i) {
+                                const tmp = orderState[i];
+                                orderState[i] = orderState[pos];
+                                orderState[pos] = tmp;
+                                const q = questions[current];
+                                $("#order-list").outerHTML = renderOrder(q);
+                            }
+                        }
+                    }
+                };
+                document.addEventListener("touchmove", onMove, {
+                    passive: false,
+                });
+                document.addEventListener("touchend", onEnd);
+            }
 
-let touchIdx=null,touchEl=null;
-function tStart(e,i){
-  touchIdx=i;touchEl=e.currentTarget;
-  const onMove=ev=>{ev.preventDefault()};
-  const onEnd=ev=>{
-    document.removeEventListener('touchmove',onMove);
-    document.removeEventListener('touchend',onEnd);
-    const touch=ev.changedTouches[0];
-    const target=document.elementFromPoint(touch.clientX,touch.clientY);
-    if(target){
-      const item=target.closest('.order-item');
-      if(item){
-        const pos=parseInt(item.dataset.pos);
-        if(pos!==i){
-          const tmp=orderState[i];orderState[i]=orderState[pos];orderState[pos]=tmp;
-          const q=questions[current];
-          $('#order-list').outerHTML=renderOrder(q);
-        }
-      }
-    }
-  };
-  document.addEventListener('touchmove',onMove,{passive:false});
-  document.addEventListener('touchend',onEnd);
-}
+            function selectSingle(el) {
+                if (answered) return;
+                qCard
+                    .querySelectorAll(".opt")
+                    .forEach((o) => o.classList.remove("selected"));
+                el.classList.add("selected");
+            }
+            function toggleMulti(el) {
+                if (answered) return;
+                el.classList.toggle("selected");
+            }
+            function selectTF(el) {
+                if (answered) return;
+                qCard
+                    .querySelectorAll(".opt")
+                    .forEach((o) => o.classList.remove("selected"));
+                el.classList.add("selected");
+            }
 
-function selectSingle(el){
-  if(answered)return;
-  qCard.querySelectorAll('.opt').forEach(o=>o.classList.remove('selected'));
-  el.classList.add('selected');
-}
-function toggleMulti(el){
-  if(answered)return;
-  el.classList.toggle('selected');
-}
-function selectTF(el){
-  if(answered)return;
-  qCard.querySelectorAll('.opt').forEach(o=>o.classList.remove('selected'));
-  el.classList.add('selected');
-}
+            function checkAnswer() {
+                if (answered) return;
+                const q = questions[current];
+                let correct = false;
 
-function checkAnswer(){
-  if(answered)return;
-  const q=questions[current];
-  let correct=false;
+                if (q.type === "single") {
+                    const sel = qCard.querySelector(".opt.selected");
+                    if (!sel) return;
+                    const i = parseInt(sel.dataset.i);
+                    correct = i === q.answer;
+                    qCard.querySelectorAll(".opt").forEach((o) => {
+                        const oi = parseInt(o.dataset.i);
+                        if (oi === q.answer) o.classList.add("correct");
+                        else if (o.classList.contains("selected"))
+                            o.classList.add("wrong");
+                    });
+                } else if (q.type === "multi") {
+                    const sels = [
+                        ...qCard.querySelectorAll(".opt.selected"),
+                    ].map((o) => parseInt(o.dataset.i));
+                    if (!sels.length) return;
+                    correct =
+                        sels.length === q.answer.length &&
+                        sels.every((s) => q.answer.includes(s));
+                    qCard.querySelectorAll(".opt").forEach((o) => {
+                        const oi = parseInt(o.dataset.i);
+                        if (q.answer.includes(oi)) o.classList.add("correct");
+                        else if (o.classList.contains("selected"))
+                            o.classList.add("wrong");
+                    });
+                } else if (q.type === "tf") {
+                    const sel = qCard.querySelector(".opt.selected");
+                    if (!sel) return;
+                    const val = sel.dataset.v === "true";
+                    correct = val === q.answer;
+                    qCard.querySelectorAll(".opt").forEach((o) => {
+                        const ov = o.dataset.v === "true";
+                        if (ov === q.answer) o.classList.add("correct");
+                        else if (o.classList.contains("selected"))
+                            o.classList.add("wrong");
+                    });
+                } else if (q.type === "fill") {
+                    const inp = $("#fill-ans");
+                    const val = inp.value.trim();
+                    if (!val) return;
+                    correct = q.answer.some(
+                        (a) => a.toLowerCase() === val.toLowerCase(),
+                    );
+                    inp.classList.add(correct ? "correct" : "wrong");
+                    if (!correct)
+                        inp.value = inp.value + " → správně: " + q.answer[0];
+                } else if (q.type === "order") {
+                    correct = orderState.every(
+                        (v, i) => v === q.correctOrder[i],
+                    );
+                    const items = qCard.querySelectorAll(".order-item");
+                    items.forEach((el, i) => {
+                        el.classList.add(
+                            orderState[i] === q.correctOrder[i]
+                                ? "correct"
+                                : "wrong",
+                        );
+                        el.setAttribute("draggable", "false");
+                    });
+                }
 
-  if(q.type==='single'){
-    const sel=qCard.querySelector('.opt.selected');
-    if(!sel)return;
-    const i=parseInt(sel.dataset.i);
-    correct=i===q.answer;
-    qCard.querySelectorAll('.opt').forEach(o=>{
-      const oi=parseInt(o.dataset.i);
-      if(oi===q.answer)o.classList.add('correct');
-      else if(o.classList.contains('selected'))o.classList.add('wrong');
-    });
-  } else if(q.type==='multi'){
-    const sels=[...qCard.querySelectorAll('.opt.selected')].map(o=>parseInt(o.dataset.i));
-    if(!sels.length)return;
-    correct=sels.length===q.answer.length&&sels.every(s=>q.answer.includes(s));
-    qCard.querySelectorAll('.opt').forEach(o=>{
-      const oi=parseInt(o.dataset.i);
-      if(q.answer.includes(oi))o.classList.add('correct');
-      else if(o.classList.contains('selected'))o.classList.add('wrong');
-    });
-  } else if(q.type==='tf'){
-    const sel=qCard.querySelector('.opt.selected');
-    if(!sel)return;
-    const val=sel.dataset.v==='true';
-    correct=val===q.answer;
-    qCard.querySelectorAll('.opt').forEach(o=>{
-      const ov=o.dataset.v==='true';
-      if(ov===q.answer)o.classList.add('correct');
-      else if(o.classList.contains('selected'))o.classList.add('wrong');
-    });
-  } else if(q.type==='fill'){
-    const inp=$('#fill-ans');
-    const val=inp.value.trim();
-    if(!val)return;
-    correct=q.answer.some(a=>a.toLowerCase()===val.toLowerCase());
-    inp.classList.add(correct?'correct':'wrong');
-    if(!correct)inp.value=inp.value+' → správně: '+q.answer[0];
-  } else if(q.type==='order'){
-    correct=orderState.every((v,i)=>v===q.correctOrder[i]);
-    const items=qCard.querySelectorAll('.order-item');
-    items.forEach((el,i)=>{
-      el.classList.add(orderState[i]===q.correctOrder[i]?'correct':'wrong');
-      el.setAttribute('draggable','false');
-    });
-  }
+                if (correct) score++;
+                answered = true;
+                feedbackEl.textContent = correct ? q.hint : "Špatně. " + q.hint;
+                feedbackEl.className =
+                    "feedback show " + (correct ? "ok" : "nok");
+                feedbackEl.style.display = "block";
+                checkBtn.style.display = "none";
+                nextBtn.style.display = "";
+                nextBtn.textContent =
+                    current < questions.length - 1
+                        ? "Další otázka"
+                        : "Zobrazit výsledky";
+            }
 
-  if(correct)score++;
-  answered=true;
-  feedbackEl.textContent=correct?q.hint:'Špatně. '+q.hint;
-  feedbackEl.className='feedback show '+(correct?'ok':'nok');
-  feedbackEl.style.display='block';
-  checkBtn.style.display='none';
-  nextBtn.style.display='';
-  nextBtn.textContent=current<questions.length-1?'Další otázka':'Zobrazit výsledky';
-}
+            function nextQuestion() {
+                current++;
+                if (current >= questions.length) {
+                    showResult();
+                    return;
+                }
+                renderQuestion();
+            }
 
-function nextQuestion(){
-  current++;
-  if(current>=questions.length){showResult();return}
-  renderQuestion();
-}
+            async function showResult() {
+                quizScreen.classList.remove("active");
+                resultScreen.classList.add("active");
+                const pct = Math.round((score / questions.length) * 100);
+                $("#score-circle").style.setProperty("--pct", pct + "%");
+                $("#score-text").textContent = pct + "%";
+                $("#score-label").textContent =
+                    `${score} z ${questions.length} správně`;
+                let msg = "";
+                if (pct === 100) msg = "Výborně! Máš to bezchybně!";
+                else if (pct >= 80) msg = "Skvělý výsledek!";
+                else if (pct >= 60)
+                    msg = "Dobrá práce, ale dá se to ještě zlepšit.";
+                else if (pct >= 40)
+                    msg = "Zkus se na video podívat ještě jednou.";
+                else msg = "Nevadí, zkus to znovu!";
+                $("#score-msg").textContent = msg;
 
-async function showResult(){
-  quizScreen.classList.remove('active');
-  resultScreen.classList.add('active');
-  const pct=Math.round(score/questions.length*100);
-  $('#score-circle').style.setProperty('--pct',pct+'%');
-  $('#score-text').textContent=pct+'%';
-  $('#score-label').textContent=`${score} z ${questions.length} správně`;
-  let msg='';
-  if(pct===100)msg='Výborně! Máš to bezchybně!';
-  else if(pct>=80)msg='Skvělý výsledek!';
-  else if(pct>=60)msg='Dobrá práce, ale dá se to ještě zlepšit.';
-  else if(pct>=40)msg='Zkus se na video podívat ještě jednou.';
-  else msg='Nevadí, zkus to znovu!';
-  $('#score-msg').textContent=msg;
+                // Save to Supabase
+                try {
+                    await fetch(SUPABASE_URL + "/rest/v1/results", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            apikey: SUPABASE_KEY,
+                            Authorization: "Bearer " + SUPABASE_KEY,
+                            Prefer: "return=minimal",
+                        },
+                        body: JSON.stringify({
+                            name: playerName,
+                            score,
+                            total: questions.length,
+                            percent: pct,
+                        }),
+                    });
+                } catch (e) {
+                    console.error("Chyba při ukládání:", e);
+                }
+            }
 
-  // Save to Supabase
-  try{
-    await fetch(SUPABASE_URL+'/rest/v1/results',{
-      method:'POST',
-      headers:{
-        'Content-Type':'application/json',
-        'apikey':SUPABASE_KEY,
-        'Authorization':'Bearer '+SUPABASE_KEY,
-        'Prefer':'return=minimal'
-      },
-      body:JSON.stringify({name:playerName,score,total:questions.length,percent:pct})
-    });
-  }catch(e){console.error('Chyba při ukládání:',e)}
-}
+            // Teacher results
+            $("#teacher-btn").addEventListener("click", async () => {
+                if ($("#teacher-pwd").value !== TEACHER_PWD) {
+                    $("#results-table").innerHTML =
+                        '<p style="color:#ef4444;margin-top:12px">Nesprávné heslo.</p>';
+                    return;
+                }
+                try {
+                    const res = await fetch(
+                        SUPABASE_URL +
+                            "/rest/v1/results?select=*&order=submitted_at.desc",
+                        {
+                            headers: {
+                                apikey: SUPABASE_KEY,
+                                Authorization: "Bearer " + SUPABASE_KEY,
+                            },
+                        },
+                    );
+                    const data = await res.json();
+                    if (!data.length) {
+                        $("#results-table").innerHTML =
+                            '<p style="margin-top:12px">Zatím žádné výsledky.</p>';
+                        return;
+                    }
+                    let t =
+                        "<table><thead><tr><th>Jméno</th><th>Skóre</th><th>%</th><th>Datum</th></tr></thead><tbody>";
+                    data.forEach((r) => {
+                        const d = new Date(r.submitted_at);
+                        t += `<tr><td>${esc(r.name)}</td><td>${r.score}/${r.total}</td><td>${r.percent}%</td><td>${d.toLocaleDateString("cs-CZ")} ${d.toLocaleTimeString("cs-CZ", { hour: "2-digit", minute: "2-digit" })}</td></tr>`;
+                    });
+                    t += "</tbody></table>";
+                    $("#results-table").innerHTML = t;
+                } catch (e) {
+                    $("#results-table").innerHTML =
+                        '<p style="color:#ef4444">Chyba načítání.</p>';
+                }
+            });
 
-// Teacher results
-$('#teacher-btn').addEventListener('click',async()=>{
-  if($('#teacher-pwd').value!==TEACHER_PWD){
-    $('#results-table').innerHTML='<p style="color:#ef4444;margin-top:12px">Nesprávné heslo.</p>';
-    return;
-  }
-  try{
-    const res=await fetch(SUPABASE_URL+'/rest/v1/results?select=*&order=submitted_at.desc',{
-      headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}
-    });
-    const data=await res.json();
-    if(!data.length){$('#results-table').innerHTML='<p style="margin-top:12px">Zatím žádné výsledky.</p>';return}
-    let t='<table><thead><tr><th>Jméno</th><th>Skóre</th><th>%</th><th>Datum</th></tr></thead><tbody>';
-    data.forEach(r=>{
-      const d=new Date(r.submitted_at);
-      t+=`<tr><td>${esc(r.name)}</td><td>${r.score}/${r.total}</td><td>${r.percent}%</td><td>${d.toLocaleDateString('cs-CZ')} ${d.toLocaleTimeString('cs-CZ',{hour:'2-digit',minute:'2-digit'})}</td></tr>`;
-    });
-    t+='</tbody></table>';
-    $('#results-table').innerHTML=t;
-  }catch(e){$('#results-table').innerHTML='<p style="color:#ef4444">Chyba načítání.</p>'}
-});
-
-function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
-function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}}
-</script>
-</body>
+            function esc(s) {
+                const d = document.createElement("div");
+                d.textContent = s;
+                return d.innerHTML;
+            }
+            function shuffle(a) {
+                for (let i = a.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [a[i], a[j]] = [a[j], a[i]];
+                }
+            }
+        </script>
+    </body>
 </html>
