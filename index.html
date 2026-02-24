@@ -533,7 +533,7 @@
             const SUPABASE_URL = "https://uytbkmayjhvuoiymqkrz.supabase.co";
             const SUPABASE_KEY =
                 "sb_publishable_bRs28SFvfKc3bCh52JpAMw_Q5kDw3re";
-            const TEACHER_PWD = "ucitel123";
+            // Heslo se ověřuje z databáze
 
             // ── Questions ──
             const questions = [
@@ -1007,9 +1007,30 @@
 
             // Teacher results
             async function loadResults(pwdInput, tableEl) {
-                if (pwdInput.value !== TEACHER_PWD) {
+                // Ověř heslo oproti databázi
+                try {
+                    const pwdRes = await fetch(
+                        SUPABASE_URL +
+                            "/rest/v1/settings?key=eq.teacher_password&select=value",
+                        {
+                            headers: {
+                                apikey: SUPABASE_KEY,
+                                Authorization: "Bearer " + SUPABASE_KEY,
+                            },
+                        },
+                    );
+                    const pwdData = await pwdRes.json();
+                    if (
+                        !pwdData.length ||
+                        pwdInput.value !== pwdData[0].value
+                    ) {
+                        tableEl.innerHTML =
+                            '<p style="color:#ef4444;margin-top:12px">Nespr\u00e1vn\u00e9 heslo.</p>';
+                        return;
+                    }
+                } catch (e) {
                     tableEl.innerHTML =
-                        '<p style="color:#ef4444;margin-top:12px">Nespr\u00e1vn\u00e9 heslo.</p>';
+                        '<p style="color:#ef4444">Chyba ov\u011b\u0159en\u00ed hesla.</p>';
                     return;
                 }
                 try {
